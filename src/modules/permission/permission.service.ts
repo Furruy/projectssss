@@ -1,8 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { Role } from '../roles/entities/roles.entity';
+import { User } from '../users/entities/user.entity';
 
 import { Permission } from './entities/permission.entity';
 
@@ -12,62 +13,86 @@ export class PermissionsService {
     @InjectRepository(Permission)
     private permissionsRepository: Repository<Permission>,
     @InjectRepository(Permission)
-    private roleRepository: Repository<Role>
+    private roleRepository: Repository<Role>,
+    @InjectRepository(User)
+    private usersRepository: Repository<User>
   ) {}
 
-  async findAll(): Promise<Permission[]> {
-    return this.permissionsRepository.find();
-  }
+  async createPermission(createPermissionDto: any): Promise<Permission> {
+    const { name, description } = createPermissionDto;
 
-  async create(createPermissionDto: any): Promise<any> {
-    const permission = this.permissionsRepository.create(createPermissionDto);
-    return this.permissionsRepository.save(permission);
-  }
-
-  async update(id: number, updatePermissionDto: any): Promise<Permission> {
-    const permission = await this.permissionsRepository.findOne({ where: { id } });
-    if (!permission) {
-      throw new NotFoundException(`Permission with ID ${id} not found`);
+    const existingPermission = await this.permissionsRepository.findOne({ where: { name } });
+    if (existingPermission) {
+      throw new BadRequestException('Permission already exists');
     }
-    Object.assign(permission, updatePermissionDto);
-    return this.permissionsRepository.save(permission);
-  }
 
-  async remove(id: number): Promise<void> {
-    const permission = await this.permissionsRepository.findOne({ where: { id } });
-    if (!permission) {
-      throw new NotFoundException(`Permission with ID ${id} not found`);
+    if (!name) {
+      throw new BadRequestException('Permission name is required');
     }
-    await this.permissionsRepository.remove(permission);
+
+    const newPermission = this.permissionsRepository.create({ name, description });
+    return await this.permissionsRepository.save(newPermission);
   }
 
-  async findPermissionsByRole(roleId: number): Promise<any> {
-    const role = await this.roleRepository.findOne({ where: { id: roleId } });
+  async updatePermission(permissionId: string, newName: string): Promise<any> {
+    const permission = await this.permissionsRepository.findOneBy({ id: Number(permissionId) });
+    if (!permission) {
+      throw new Error('Permission not found');
+    }
+
+    permission.name = newName;
+    return await this.permissionsRepository.save(permission);
+  }
+
+  async deletePermission(permissionId: string): Promise<any> {
+    const permission = await this.permissionsRepository.findOneBy({ id: Number(permissionId) });
+    if (!permission) {
+      throw new Error('Permission not found');
+    }
+
+    return await this.permissionsRepository.remove(permission);
+  }
+
+  async getPermissions() {
+    return await this.permissionsRepository.find();
+  }
+
+  async assignPermissionToRole(roleId: number, permissionId: number): Promise<any> {
+    const role = await this.roleRepository.findOne({ where: { id: roleId }, relations: ['permissions'] });
     if (!role) {
-      throw new NotFoundException(`Role with ID ${roleId} not found`);
+      throw new BadRequestException('Role not found');
     }
 
-    const rolePermissions = await this.roleRepository
-      .createQueryBuilder('role')
-      .innerJoinAndSelect('role.permissions', 'permission')
-      .where('role.id = :roleId', { roleId })
-      .getMany();
-
-    if (!rolePermissions || rolePermissions.length === 0) {
-      return [];
+    const permission = await this.permissionsRepository.findOne({ where: { id: permissionId } });
+    if (!permission) {
+      throw new BadRequestException('Permission not found');
     }
 
-    return rolePermissions.map((rolePermission) => ({
-      role: {
-        id: rolePermission.id,
-        name: rolePermission.name,
-        description: rolePermission.description
-      },
-      permissions: rolePermission.permissions.map((permission) => ({
-        id: permission.id,
-        name: permission.name,
-        description: permission.description
-      }))
-    }));
+    if (!role.permissions) {
+      return { message: 'Role does not have any permissions' };
+    }
+
+    await this.roleRepository
+      .createQueryBuilder()
+      .insert()
+      .into('role_permissions')
+      .values({
+        role_id: roleId,
+        permission_id: permissionId
+      })
+      .execute();
+
+    return { roleId, permissionId, message: 'Permission assigned successfully' };
+  }
+
+  async getPermissionsByUserId(userId: string): Promise<any> {
+    const user = await this.usersRepository.findOne({
+      where: { id: userId },
+      relations: ['roles', 'roles.permissions']
+    });
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+    return user.roles.map((role) => role.permissions).flat();
   }
 }

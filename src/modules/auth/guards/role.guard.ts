@@ -1,18 +1,12 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { JwtService } from '@nestjs/jwt';
 
 import { ROLES_KEY } from '@/common/decorators/role.devorator';
 import { RolesEnum } from '@/common/enums/role.enum';
-import { UsersService } from '@/modules/users/users.service';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(
-    private readonly reflector: Reflector,
-    private readonly jwtService: JwtService,
-    private readonly userService: UsersService
-  ) {}
+  constructor(private readonly reflector: Reflector) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const roles = this.reflector.get<RolesEnum[]>(ROLES_KEY, context.getHandler());
@@ -29,18 +23,18 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException('No token provided');
     }
 
-    const dataUser = await this.userService.findUserById(user.id);
+    if (request.isSuperAdmin) {
+      return true;
+    }
 
     if (!user) {
       throw new ForbiddenException('User not found');
     }
 
-    // const hasRole = dataUser?.userRoles.some((userRole) => roles.includes(userRole.role.id));
+    if (!roles) {
+      return true;
+    }
 
-    // if (!hasRole) {
-    //   throw new ForbiddenException('Insufficient permissions');
-    // }
-
-    // return true;
+    return roles.some((role) => user.roles.includes(role));
   }
 }

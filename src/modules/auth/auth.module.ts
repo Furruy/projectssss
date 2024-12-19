@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { jwtConfig } from '@/common/config/jwt.config';
 import { JwtStrategy } from '@/modules/auth/strategies/jwt.strategy';
 
+import { Permission } from '../permission/entities/permission.entity';
 import { User } from '../users/entities/user.entity';
 import { UsersModule } from '../users/users.module';
 
@@ -19,7 +20,7 @@ import { AuthController } from './auth.controller';
 @Module({
   imports: [
     JwtModule.registerAsync(jwtConfig),
-    TypeOrmModule.forFeature([AccessToken, RefreshToken, User]),
+    TypeOrmModule.forFeature([AccessToken, RefreshToken, User, Permission]),
     JwtModule.register({}),
     forwardRef(() => UsersModule)
   ],
