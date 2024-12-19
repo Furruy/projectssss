@@ -56,7 +56,6 @@ export class AuthService {
    */
   async validateUserCredentials(email: string, password: string): Promise<User> {
     const user = await this.usersService.findUserByEmail(email);
-
     if (!user || !(await this.bcryptService.compare(password, user.password))) {
       throw new UnauthorizedException('auth.errors.invalid_email_or_password');
     }
@@ -82,5 +81,40 @@ export class AuthService {
     const accessToken = await this.tokenService.generateAccessToken(user, refreshToken);
 
     return { accessToken: accessToken.value, refreshToken: refreshToken.value };
+  }
+
+  async hasRole(userId: string, role: number): Promise<boolean> {
+    // const userRoles = await this.userRoleRepository.find({
+    //   where: { user: { id: userId } },
+    //   relations: ['role']
+    // });
+    // return userRoles.some((userRole) => userRole.role.id === role);
+    return false;
+  }
+
+  async hasPermission(userId: string, permissionId: any): Promise<boolean> {
+    // const userRoles = await this.userRoleRepository.find({
+    //   where: { user: { id: userId } },
+    //   relations: ['role', 'role.rolePermissions', 'role.rolePermissions.permission']
+    // });
+
+    // for (const userRole of userRoles) {
+    //   const rolePermissions = userRole.role.rolePermissions;
+    //   if (rolePermissions.some((rolePermission) => rolePermission.permission.id === permissionId)) {
+    //     return true;
+    //   }
+    // }
+
+    return false;
+  }
+
+  async getRoles(userId: string) {
+    // const userRoles = await this.userRoleRepository.find({
+    //   where: { user: { id: userId } },
+    //   relations: ['role']
+    // });
+
+    // return userRoles.map((userRole) => userRole.role);
+    return 1;
   }
 }

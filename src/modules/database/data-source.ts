@@ -8,7 +8,7 @@ config();
 export const dataSourceOptions = {
   type: 'mysql' as any,
   host: process.env.MYSQL_HOST,
-  port: +process.env.MYSQL_PORT,
+  port: +process.env.MYSQL_PORT || "3307",
   username: process.env.MYSQL_ROOT_USER,
   password: process.env.MYSQL_ROOT_PASSWORD,
   database: process.env.MYSQL_DATABASE,

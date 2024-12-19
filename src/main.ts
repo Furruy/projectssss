@@ -45,5 +45,7 @@ async function bootstrap() {
   SwaggerModule.setup('docs', app, document);
 
   await app.listen(5001);
+  const url = await app.getUrl();
+  console.log(url);
 }
 bootstrap();

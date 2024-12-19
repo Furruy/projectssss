@@ -9,6 +9,7 @@ import { RequestWithUser } from '@/common/types/index.e';
 
 import { GetUserResponseDto } from './dto/user-response.dto';
 import { User } from './entities/user.entity';
+
 @ApiTags('Users')
 @Controller('users')
 export class UsersController {

@@ -10,10 +10,19 @@ import { throttlerConfig } from './common/config/throttler.config';
 import { ApiResponseInterceptor } from './common/interceptors/response.interceptor';
 import { AuthModule } from './modules/auth/auth.module';
 import { JwtGuard } from './modules/auth/guards/jwt.guard';
+import { PermissionModule } from './modules/permission/permission.module';
+import { RolesModule } from './modules/roles/role.module';
 import { UsersModule } from './modules/users/users.module';
 
 @Module({
-  imports: [ThrottlerModule.forRoot(throttlerConfig), DatabaseModule, UsersModule, AuthModule],
+  imports: [
+    ThrottlerModule.forRoot(throttlerConfig),
+    DatabaseModule,
+    UsersModule,
+    AuthModule,
+    RolesModule,
+    PermissionModule
+  ],
   controllers: [],
   providers: [
     {

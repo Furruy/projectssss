@@ -1,4 +1,13 @@
-import { Body, ConflictException, Controller, HttpCode, HttpStatus, Post, UnauthorizedException } from '@nestjs/common';
+import {
+  Body,
+  ConflictException,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Res,
+  UnauthorizedException
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 import { EUserStatus } from '@/common/enums/common.enum';
@@ -56,8 +65,10 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Invalid email or password' })
   async login(@Body() loginPayloadDto: LoginRequestDto): Promise<LoginResponseDto> {
     const { email, password } = loginPayloadDto;
-    const user = await this.authService.validateUser(email, password);
 
+    const user = await this.authService.validateUser(email, password);
+    console.log(await this.usersService.findUserById(user.id));
+    // res.setHeader('user', user);
     if (user.status === EUserStatus.inactive) {
       throw new UnauthorizedException('auth.errors.user_inactive');
     }
@@ -68,7 +79,14 @@ export class AuthController {
 
     const { accessToken, refreshToken } = await this.authService.generateAuthTokens(user);
 
-    return { tokens: { accessToken, refreshToken } };
+    // return res.status(HttpStatus.OK).json({
+    return {
+      tokens: {
+        accessToken,
+        refreshToken
+      }
+    };
+    // });
   }
 
   @Post('logout')
